@@ -1,0 +1,276 @@
+<html>
+  <head>
+    <title>AR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script
+      type="module"
+      src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"
+    ></script>
+    <link rel="stylesheet" href="demo-styles.css" />
+    <style>
+      .water-mark-logo {
+        position: absolute;
+        width: 140px;
+        height: 140px;
+        left: 0px;
+        bottom: -50px;
+      }
+      model-viewer {
+        width: 100%;
+        height: 400px;
+      }
+
+      /* This keeps child nodes hidden while the element loads */
+      :not(:defined) > * {
+        display: none;
+      }
+
+      .ar-button {
+        background-image: url(https://cdn.khronos.org/assets/blog/live-gltf-asset-editing-in-your-browsereven-in-ar/ic_view_in_ar_new_googblue_48dp.png);
+        background-repeat: no-repeat;
+        background-size: 20px 20px;
+        background-position: 12px 50%;
+        background-color: #fff;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        white-space: nowrap;
+        bottom: 16px;
+        padding: 0px 16px 0px 40px;
+        font-family: Roboto Regular, Helvetica Neue, sans-serif;
+        font-size: 14px;
+        color: #4285f4;
+        height: 36px;
+        line-height: 36px;
+        border-radius: 18px;
+        border: 1px solid #dadce0;
+      }
+
+      .ar-button:active {
+        background-color: #e8eaed;
+      }
+
+      .ar-button:focus {
+        outline: none;
+      }
+
+      .ar-button:focus-visible {
+        outline: 1px solid #4285f4;
+      }
+
+      @keyframes circle {
+        from {
+          transform: translateX(-50%) rotate(0deg) translateX(50px) rotate(0deg);
+        }
+
+        to {
+          transform: translateX(-50%) rotate(360deg) translateX(50px)
+            rotate(-360deg);
+        }
+      }
+
+      @keyframes elongate {
+        from {
+          transform: translateX(100px);
+        }
+
+        to {
+          transform: translateX(-100px);
+        }
+      }
+
+      model-viewer > #ar-prompt {
+        position: absolute;
+        left: 50%;
+        bottom: 75px;
+        animation: elongate 2s infinite ease-in-out alternate;
+        display: none;
+      }
+
+      model-viewer[ar-status="session-started"] > #ar-prompt {
+        display: block;
+      }
+
+      model-viewer > #ar-prompt > img {
+        animation: circle 4s linear infinite;
+      }
+
+      #controls {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        font-family: Roboto Regular, Helvetica Neue, sans-serif;
+        font-size: 16px;
+        background-color: #fff8;
+        padding: 16px;
+        border-radius: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- <model-viewer
+      src="Bed_origin.glb"
+      alt="A 3D model"
+      auto-rotate
+      camera-controls
+      scale="1 1 1"
+      style="width: 100%; height: 100%"
+      ar
+      ar-modes="webxr scene-viewer quick-look"
+    >
+    </model-viewer> -->
+
+    <model-viewer
+      id="chair"
+      src="Bed_origin.glb"
+      alt="A 3D model"
+      auto-rotate
+      camera-controls
+      scale="1 1 1"
+      style="width: 100%; height: 100%"
+      ar
+      ar-modes="scene-viewer quick-look"
+    >
+      <div class="control">
+        <div>
+          Variant Frame:
+          <select id="variant_frame"></select>
+        </div>
+        <div>
+          Variant Bed:
+          <select id="variant_bed"></select>
+        </div>
+      </div>
+
+      <button class="showHideBed hide" style="margin-top: 20px">
+        Hide Bed
+      </button>
+      <img src="./water-mark.png" class="water-mark-logo" alt="" />
+    </model-viewer>
+
+    <script>
+      // const modelViewer = document.querySelector("#modelViewer");
+      // modelViewer.addEventListener("load", () => {
+      //   // Use a temporary scene to calculate dimensions
+      //   const scene = modelViewer.model;
+
+      //   // Use the scale to set a fixed reference size
+      //   const scale = modelViewer.scale; // Get the current scale
+
+      //   console.log(scale);
+
+      //   // Adjust this based on known dimensions or a manual approximation
+      //   const estimatedWidth = 1; // Adjust based on your model's real-world size
+      //   const estimatedHeight = 1; // Adjust based on your model's real-world size
+      //   const estimatedDepth = 1; // Adjust based on your model's real-world size
+
+      //   // Log estimated dimensions
+      //   console.log(
+      //     `Estimated Width: ${estimatedWidth}, Height: ${estimatedHeight}, Depth: ${estimatedDepth}`
+      //   );
+
+      //   // Calculate a scale factor
+      //   const maxSize = 1.0; // Desired maximum size
+      //   const maxDim = Math.max(
+      //     estimatedWidth,
+      //     estimatedHeight,
+      //     estimatedDepth
+      //   );
+
+      //   const scaleFactor = maxSize / maxDim;
+      //   modelViewer.scale = `${scaleFactor} ${scaleFactor} ${scaleFactor}`;
+      //   console.log(modelViewer.scale);
+      // });
+    </script>
+
+    <script>
+      // check for IE11 "https://unpkg.com/@google/model-viewer"
+      window.addEventListener("DOMContentLoaded", function () {
+        var isIE11 = !window.ActiveXObject && "ActiveXObject" in window;
+        if (isIE11) {
+          var ie11Message = document.getElementById("ie11-message");
+          ie11Message.style.display = "block";
+          return;
+        }
+      });
+    </script>
+
+    <script>
+      const modelViewerVariants = document.querySelector("model-viewer#chair");
+      const selectFrame = document.querySelector("#variant_frame");
+      const selectBed = document.querySelector("#variant_bed");
+      const mv = document.querySelector("#chair");
+      const toggleBedBtn = document.querySelector(".showHideBed");
+
+      mv.addEventListener("load", () => {
+        const sceneSymbol = Object.getOwnPropertySymbols(mv).find(
+          (x) => x.description === "scene"
+        );
+        const scene = mv[sceneSymbol];
+
+        let bedObject;
+        scene.traverse((child) => {
+          if (child.userData.name === "pCube22.001" && child.isMesh) {
+            bedObject = child;
+          }
+        });
+
+        function resetRotation() {
+          mv.resetTurntableRotation(0);
+        }
+
+        function toggleObjHide() {
+          resetRotation();
+          if (bedObject) {
+            if (toggleBedBtn.classList.contains("show")) {
+              bedObject.visible = true;
+              toggleBedBtn.classList.remove("show");
+              toggleBedBtn.classList.add("hide");
+              toggleBedBtn.textContent = "Hide Bed";
+              console.log("hide");
+            } else {
+              bedObject.visible = false;
+              toggleBedBtn.classList.remove("hide");
+              toggleBedBtn.classList.add("show");
+              toggleBedBtn.textContent = "Show Bed";
+              console.log("show");
+            }
+          } else {
+            console.error(
+              "Object with name pCube22001 not found in the scene."
+            );
+          }
+        }
+
+        toggleBedBtn.addEventListener("click", toggleObjHide);
+      });
+
+      modelViewerVariants.addEventListener("load", () => {
+        const names = modelViewerVariants.availableVariants;
+
+        for (const name of names.reverse()) {
+          const dataName = name.replace(/_/g, " ");
+          if (name.includes("Frame")) {
+            const option = document.createElement("option");
+            option.value = name;
+            option.textContent = dataName;
+            selectFrame.appendChild(option);
+          } else if (name.includes("Bed")) {
+            const option = document.createElement("option");
+            option.value = name;
+            option.textContent = dataName;
+            selectBed.appendChild(option);
+          }
+        }
+      });
+
+      selectFrame.addEventListener("input", (event) => {
+        modelViewerVariants.variantName = event.target.value;
+      });
+
+      selectBed.addEventListener("input", (event) => {
+        modelViewerVariants.variantName = event.target.value;
+      });
+    </script>
+  </body>
+</html>
